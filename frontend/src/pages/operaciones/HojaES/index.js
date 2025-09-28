@@ -33,6 +33,7 @@ const HojaES = () => {
   // Nuevos estados para los elementos agregados
   const [numeroHoja, setNumeroHoja] = useState('');
   const [porcentajeTanque, setPorcentajeTanque] = useState(0);
+  const [valeSeleccionado, setValeSeleccionado] = useState('');
   
   // Estados para fotos
   const [fotosCargadas, setFotosCargadas] = useState(0);
@@ -76,7 +77,7 @@ const HojaES = () => {
   // Validar formulario
   useEffect(() => {
     validateForm();
-  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado, porcentajeTanque, fotosCargadas]);
+  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado, porcentajeTanque, fotosCargadas, valeSeleccionado]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -115,6 +116,7 @@ const HojaES = () => {
     // Validaciones para los nuevos campos
     if (porcentajeTanque === 0) newErrors.porcentajeTanque = 'Nivel de combustible es requerido';
     if (fotosCargadas !== 5) newErrors.fotos = 'Se requieren 5 fotos de la motocicleta';
+    if (!valeSeleccionado) newErrors.valeSeleccionado = 'Debe seleccionar un vale de combustible';
 
     setErrors(newErrors);
     setIsFormValid(Object.keys(newErrors).length === 0);
@@ -276,7 +278,8 @@ const HojaES = () => {
         lectura_km_num: parseInt(kilometraje),
         observaciones,
         porcentaje_tanque: porcentajeTanque,
-        lectura_km_pic: '' // Ya no usamos esta imagen individual
+        lectura_km_pic: '', // Ya no usamos esta imagen individual
+        id_vale: parseInt(valeSeleccionado) // Agregar el vale seleccionado
       };
  
       console.log('📊 Datos a enviar:', hojaData);
@@ -290,9 +293,16 @@ const HojaES = () => {
       });
 
       const hojaResponse = await axiosInstance.post('/api/hoja-es/hoja', hojaData);
-      const id_hoja = hojaResponse.data.data.id_hoja;
       
-      console.log('📋 ID de hoja obtenido del backend:', id_hoja, 'tipo:', typeof id_hoja);
+      if (!hojaResponse.data.success) {
+        throw new Error(hojaResponse.data.error || 'Error al crear la hoja de salida');
+      }
+      
+      if (!hojaResponse.data.data || !hojaResponse.data.data.id_hoja) {
+        throw new Error('No se recibió el ID de hoja del backend');
+      }
+      
+      const id_hoja = hojaResponse.data.data.id_hoja;
       
       // Actualizar el estado local con el número generado por el backend
       setNumeroHoja(id_hoja);
@@ -363,7 +373,15 @@ const HojaES = () => {
       
     } catch (error) {
       console.error('Error creating hoja:', error);
-      alert('Error al crear la hoja de salida');
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      let errorMessage = 'Error al crear la hoja de salida';
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -424,7 +442,7 @@ const HojaES = () => {
         />
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Validación de Items a Revisar en la Salida</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Creación de la Salida</h1>
           
           {/* Sección de Encabezado */}
           <HeaderSection
@@ -451,6 +469,9 @@ const HojaES = () => {
             fotosCargadas={fotosCargadas}
             fotosFaltantes={fotosFaltantes}
             onOpenFotosModal={handleOpenFotosModal}
+            // Props para vales de combustible
+            valeSeleccionado={valeSeleccionado}
+            setValeSeleccionado={setValeSeleccionado}
           />
 
           {/* Secciones de Items */}

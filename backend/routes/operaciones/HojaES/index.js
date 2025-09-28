@@ -109,7 +109,16 @@ router.post('/hoja', auth, [
   body('lectura_km_num').notEmpty().isInt({ min: 0 }),
   body('observaciones').optional().trim().escape(),
   body('porcentaje_tanque').optional().isFloat({ min: 0, max: 100 }),
-  body('lectura_km_pic').optional().trim()
+  body('lectura_km_pic').optional().trim(),
+  body('id_vale').optional().custom((value) => {
+    if (value === null || value === undefined || value === '') {
+      return true; // Permitir valores nulos/vacíos
+    }
+    if (typeof value === 'number' && value >= 1) {
+      return true; // Permitir enteros >= 1
+    }
+    throw new Error('id_vale debe ser un entero mayor o igual a 1');
+  })
 ], async (req, res) => {
   try {
     console.log('📊 Datos recibidos en backend:', req.body);
@@ -132,7 +141,8 @@ router.post('/hoja', auth, [
       lectura_km_num,
       observaciones,
       porcentaje_tanque,
-      lectura_km_pic
+      lectura_km_pic,
+      id_vale
     } = req.body;
 
     // Obtener el siguiente ID de hoja usando el procedimiento almacenado
@@ -151,10 +161,19 @@ router.post('/hoja', auth, [
       [
         id_hoja, 1, id_plataforma, id_piloto, id_vehiculo, placa_id,
         lectura_km_pic || '', 0, 'S', 0, lectura_km_num,
-        null, porcentaje_tanque || null,
+        id_vale || null, porcentaje_tanque || null,
         req.user.id_usuario, observaciones || '', 'ING'
       ]
     );
+
+    // Si se proporcionó un vale, actualizar su estado a 'RES' (Reservado)
+    if (id_vale) {
+      console.log(`📝 Actualizando vale ${id_vale} a estado RES para hoja ${id_hoja}`);
+      await pool.execute(
+        'UPDATE FLVEHI.FLVEH_M010 SET estado = "RES", id_hoja_salida = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vale = ?',
+        [id_hoja, id_vale]
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -310,6 +329,77 @@ router.get('/vales-combustible', auth, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Error al obtener los vales de combustible' 
+    });
+  }
+});
+
+// GET - Obtener vale de combustible asociado a una hoja de salida
+router.get('/vale-por-hoja/:id_hoja', auth, async (req, res) => {
+  try {
+    const { id_hoja } = req.params;
+    
+    const [vales] = await pool.execute(
+      `SELECT 
+        id_vale, id_empresa, id_sede_origen, id_hoja_salida, tipo_combustible, 
+        proveedor, fe_emision, fe_validez, cod_barra, cupon, codigo, 
+        valor_vale, id_autoriza, observaciones, fe_registro, fe_modificacion, estado
+      FROM FLVEHI.FLVEH_M010 
+      WHERE id_hoja_salida = ? AND estado = 'RES'
+      ORDER BY fe_registro DESC
+      LIMIT 1`,
+      [id_hoja]
+    );
+
+    if (vales.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No se encontró un vale de combustible asociado a esta hoja de salida'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: vales[0]
+    });
+  } catch (error) {
+    console.error('Error getting vale by hoja:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener el vale de combustible' 
+    });
+  }
+});
+
+// GET - Obtener detalle de una hoja específica
+router.get('/hoja/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [hojas] = await pool.execute(
+      `SELECT h.*, p.nombres, p.apellidos, v.placa_id, v.marca_vehiculo, v.modelo
+       FROM FLVEHI.FLVEH_T001 h
+       LEFT JOIN FLVEHI.FLVEH_M004 p ON h.id_piloto = p.id_piloto
+       LEFT JOIN FLVEHI.FLVEH_M001 v ON h.id_vehiculo = v.id_vehiculo
+       WHERE h.id_hoja = ?`,
+      [id]
+    );
+    
+    if (hojas.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja de salida no encontrada'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: hojas[0]
+    });
+  } catch (error) {
+    console.error('Error getting hoja detail:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener el detalle de la hoja' 
     });
   }
 });
@@ -743,6 +833,8 @@ router.get('/autorizacion/hojas', auth, async (req, res) => {
     const [hojas] = await pool.execute(
       `SELECT 
         h.id_hoja,
+        h.id_piloto,
+        h.id_vehiculo,
         h.id_plataforma,
         h.placa_id,
         h.lectura_km_num,
@@ -798,8 +890,7 @@ router.get('/autorizacion/hojas', auth, async (req, res) => {
 
 // POST - Autorizar hoja de salida
 router.post('/autorizacion/autorizar', auth, [
-  body('id_hoja').notEmpty().isInt({ min: 1 }),
-  body('id_vale').notEmpty().isInt({ min: 1 })
+  body('id_hoja').notEmpty().isInt({ min: 1 })
 ], async (req, res) => {
   const connection = await pool.getConnection();
   
@@ -815,13 +906,13 @@ router.post('/autorizacion/autorizar', auth, [
       });
     }
 
-    const { id_hoja, id_vale } = req.body;
+    const { id_hoja } = req.body;
 
-    console.log(`🔍 Iniciando autorización de hoja ${id_hoja} con vale ${id_vale}`);
+    console.log(`🔍 Iniciando autorización de hoja ${id_hoja}`);
 
     // Verificar que la hoja existe y está en estado ING
     const [hoja] = await connection.execute(
-      'SELECT id_hoja, estado FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      'SELECT id_hoja, estado, lectura_km_num FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
       [id_hoja]
     );
 
@@ -833,28 +924,32 @@ router.post('/autorizacion/autorizar', auth, [
       });
     }
 
-    // Verificar que el vale existe y está disponible
+    // Buscar el vale asociado a esta hoja de salida
     const [vale] = await connection.execute(
-      'SELECT id_vale, estado FROM FLVEHI.FLVEH_M010 WHERE id_vale = ? AND estado IN ("DISP", "ACT")',
-      [id_vale]
+      'SELECT id_vale, estado FROM FLVEHI.FLVEH_M010 WHERE id_hoja_salida = ? AND estado = "RES"',
+      [id_hoja]
     );
 
     if (vale.length === 0) {
       await connection.rollback();
       return res.status(404).json({
         success: false,
-        error: 'Vale de combustible no encontrado o no disponible'
+        error: 'No se encontró un vale de combustible asociado a esta hoja de salida'
       });
     }
+
+    const id_vale = vale[0].id_vale;
 
     console.log('✅ Validaciones completadas, iniciando actualizaciones...');
 
     // 1. Actualizar FLVEH_T001 (encabezado de Hoja de Salida)
     console.log('📝 Actualizando FLVEH_T001...');
+    const lectura_km_num = hoja[0].lectura_km_num;
     await connection.execute(
-      'UPDATE FLVEHI.FLVEH_T001 SET id_vale = ?, estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
-      [id_vale, id_hoja]
+      'UPDATE FLVEHI.FLVEH_T001 SET id_vale = ?, estado = "AUT", lectura_km_num = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_vale, lectura_km_num, id_hoja]
     );
+    console.log(`✅ FLVEH_T001 actualizado con lectura_km_num: ${lectura_km_num}`);
 
     // 2. Actualizar FLVEH_T002 (detalle de Hoja de Salida)
     console.log('📝 Actualizando FLVEH_T002...');
@@ -886,17 +981,41 @@ router.post('/autorizacion/autorizar', auth, [
 
     // 6. Actualizar FLVEH_M004 (pilotos) - agregar id_hoja
     console.log('📝 Actualizando FLVEH_M004...');
-    await connection.execute(
-      'UPDATE FLVEHI.FLVEH_M004 SET id_hoja = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_piloto = (SELECT id_piloto FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?)',
-      [id_hoja, id_hoja]
+    const [pilotoResult] = await connection.execute(
+      'SELECT id_piloto FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?',
+      [id_hoja]
     );
+    
+    if (pilotoResult.length > 0) {
+      const id_piloto = pilotoResult[0].id_piloto;
+      await connection.execute(
+        'UPDATE FLVEHI.FLVEH_M004 SET id_hoja = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_piloto = ?',
+        [id_hoja, id_piloto]
+      );
+      console.log(`✅ FLVEH_M004 actualizado para piloto ${id_piloto} con hoja ${id_hoja}`);
+    } else {
+      console.log('⚠️ No se encontró piloto para la hoja');
+    }
 
-    // 7. Actualizar FLVEH_M001 (vehículos) - agregar id_hoja
+    // 7. Actualizar FLVEH_M001 (vehículos) - agregar id_hoja y actualizar kilometraje
     console.log('📝 Actualizando FLVEH_M001...');
-    await connection.execute(
-      'UPDATE FLVEHI.FLVEH_M001 SET id_hoja = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vehiculo = (SELECT id_vehiculo FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?)',
-      [id_hoja, id_hoja]
+    const [vehiculoResult] = await connection.execute(
+      'SELECT id_vehiculo, lectura_km_num FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?',
+      [id_hoja]
     );
+    
+    if (vehiculoResult.length > 0) {
+      const id_vehiculo = vehiculoResult[0].id_vehiculo;
+      const lectura_km_num = vehiculoResult[0].lectura_km_num;
+      
+      await connection.execute(
+        'UPDATE FLVEHI.FLVEH_M001 SET id_hoja = ?, kilometraje = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vehiculo = ?',
+        [id_hoja, lectura_km_num, id_vehiculo]
+      );
+      console.log(`✅ FLVEH_M001 actualizado para vehículo ${id_vehiculo} con hoja ${id_hoja} y kilometraje ${lectura_km_num}`);
+    } else {
+      console.log('⚠️ No se encontró vehículo para la hoja');
+    }
 
     await connection.commit();
     console.log('✅ Autorización completada exitosamente');
@@ -918,6 +1037,167 @@ router.post('/autorizacion/autorizar', auth, [
     res.status(500).json({ 
       success: false, 
       error: 'Error al autorizar la hoja de salida',
+      details: error.message
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// POST - Rechazar hoja de salida
+router.post('/autorizacion/rechazar', auth, [
+  body('id_hoja').notEmpty().isInt({ min: 1 }),
+  body('observaciones').optional().trim().escape()
+], async (req, res) => {
+  const connection = await pool.getConnection();
+  
+  try {
+    // Validar campos
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { id_hoja, observaciones } = req.body;
+    const usuario = req.user.usuario; // Obtener usuario del token
+    const fechaHora = new Date().toLocaleString('es-GT');
+
+    console.log(`🔍 Iniciando rechazo de hoja ${id_hoja} por usuario ${usuario}`);
+
+    await connection.beginTransaction();
+
+    // Verificar que la hoja existe y está en estado ING
+    const [hoja] = await connection.execute(
+      'SELECT id_hoja, estado, observaciones as obs_actuales, id_piloto, id_vehiculo FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      [id_hoja]
+    );
+
+    if (hoja.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja de salida no encontrada o ya no está en estado ING'
+      });
+    }
+
+    const hojaData = hoja[0];
+    const observacionesActualizadas = `${hojaData.obs_actuales || ''}**CANCELADA, por ${usuario} ${fechaHora}`;
+
+    console.log('✅ Validaciones completadas, iniciando actualizaciones de rechazo...');
+
+    // 1. Actualizar FLVEH_T001 (encabezado de Hoja de Salida)
+    console.log('📝 Actualizando FLVEH_T001...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_T001 SET estado = "CAN", observaciones = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [observacionesActualizadas, id_hoja]
+    );
+
+    // 2. Actualizar FLVEH_T002 (detalle de Hoja de Salida)
+    console.log('📝 Actualizando FLVEH_T002...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_T002 SET estado = "CAN", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // 3. Actualizar FLVEH_F001 (fotos de motocicleta)
+    console.log('📝 Actualizando FLVEH_F001...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_F001 SET estado = "CAN", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // 4. Actualizar FLVEH_F002 (fotos de items)
+    console.log('📝 Actualizando FLVEH_F002...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_F002 SET estado = "CAN", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // 5. Actualizar FLVEH_M004 (pilotos) - resetear id_hoja a 0
+    console.log('📝 Actualizando FLVEH_M004...');
+    const [pilotoResult] = await connection.execute(
+      'SELECT id_piloto FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?',
+      [id_hoja]
+    );
+    
+    if (pilotoResult.length > 0) {
+      const id_piloto = pilotoResult[0].id_piloto;
+      await connection.execute(
+        'UPDATE FLVEHI.FLVEH_M004 SET id_hoja = 0, fe_modificacion = CURRENT_TIMESTAMP WHERE id_piloto = ?',
+        [id_piloto]
+      );
+      console.log(`✅ FLVEH_M004 actualizado para piloto ${id_piloto} con id_hoja = 0`);
+    } else {
+      console.log('⚠️ No se encontró piloto para la hoja');
+    }
+
+    // 6. Actualizar FLVEH_M001 (vehículos) - resetear id_hoja a 0
+    console.log('📝 Actualizando FLVEH_M001...');
+    const [vehiculoResult] = await connection.execute(
+      'SELECT id_vehiculo FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?',
+      [id_hoja]
+    );
+    
+    if (vehiculoResult.length > 0) {
+      const id_vehiculo = vehiculoResult[0].id_vehiculo;
+      await connection.execute(
+        'UPDATE FLVEHI.FLVEH_M001 SET id_hoja = 0, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vehiculo = ?',
+        [id_vehiculo]
+      );
+      console.log(`✅ FLVEH_M001 actualizado para vehículo ${id_vehiculo} con id_hoja = 0`);
+    } else {
+      console.log('⚠️ No se encontró vehículo para la hoja');
+    }
+
+    // 7. Insertar en el log de actividades
+    console.log('📝 Insertando en log de actividades...');
+    const id_empresaLOG = req.user.id_empresa;
+    const id_accionLOG = "CAN_HOJA_ES";
+    const id_usuarioLOG = req.user.id_usuario;
+    const usuarioLOG = req.user.usuario;
+    const observacionesLOG = `Hoja cancelada - ID: ${id_hoja}`;
+    const estadoLOG = 'ACT';
+    
+    console.log("🔐 Datos del log:", {
+      id_empresa: id_empresaLOG,
+      id_accion: id_accionLOG,
+      id_usuario: id_usuarioLOG,
+      usuario: usuarioLOG,
+      observaciones: observacionesLOG,
+      estado: estadoLOG
+    });
+    
+    await connection.execute(
+      `INSERT INTO flvehi.flveh_s099 (
+        id_empresa, id_accion, id_usuario, usuario, observaciones, estado, fe_registro
+      ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [id_empresaLOG, id_accionLOG, id_usuarioLOG, usuarioLOG, observacionesLOG, estadoLOG]
+    );
+    console.log('✅ Log de actividades insertado exitosamente');
+
+    await connection.commit();
+    console.log('✅ Rechazo completado exitosamente');    
+
+    res.json({
+      success: true,
+      message: 'Hoja de salida rechazada exitosamente',
+      data: {
+        id_hoja: id_hoja,
+        estado: 'CAN',
+        observaciones: observacionesActualizadas
+      }
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('❌ Error rechazando hoja:', error);
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al rechazar la hoja de salida',
       details: error.message
     });
   } finally {

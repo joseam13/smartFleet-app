@@ -1,65 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertCircle, Fuel } from 'lucide-react';
+import { X, Check, AlertCircle, Fuel, XCircle } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 
 const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
   const [loading, setLoading] = useState(false);
-  const [vales, setVales] = useState([]);
-  const [valeSeleccionado, setValeSeleccionado] = useState('');
+  const [valeAsociado, setValeAsociado] = useState(null);
   const [observaciones, setObservaciones] = useState('');
 
-  // Cargar vales disponibles al abrir el modal
+  // Cargar vale asociado al abrir el modal
   useEffect(() => {
     if (isOpen && hoja) {
-      loadVales();
+      loadValeAsociado();
       setObservaciones(hoja.observaciones || '');
     }
   }, [isOpen, hoja]);
 
-  const loadVales = async () => {
+  const loadValeAsociado = async () => {
     try {
-      // Usar la nueva API de vales de combustible
-      const response = await axiosInstance.get('/api/vales-combustible');
+      const response = await axiosInstance.get(`/api/hoja-es/vale-por-hoja/${hoja.id_hoja}`);
       if (response.data.success) {
-        // Filtrar solo vales disponibles (ACT, DISP, ING)
-        const valesDisponibles = response.data.data.filter(vale => 
-          ['ACT', 'DISP', 'ING'].includes(vale.estado)
-        );
-        
-        // Formatear para el select
-        const valesFormateados = valesDisponibles.map(vale => ({
-          vale_id: vale.id_vale,
-          display_text: `${vale.proveedor} - Q.${parseFloat(vale.valor_vale).toFixed(2)} - Cupón: ${vale.cupon} - Código: ${vale.codigo}`,
-          valor_vale: vale.valor_vale,
-          cupon: vale.cupon,
-          codigo: vale.codigo,
-          proveedor: vale.proveedor,
-          tipo_combustible: vale.tipo_combustible,
-          estado: vale.estado
-        }));
-        
-        setVales(valesFormateados);
+        setValeAsociado(response.data.data);
       } else {
-        setVales([]);
+        setValeAsociado(null);
       }
     } catch (error) {
-      console.error('Error loading vales:', error);
-      alert('Error al cargar los vales de combustible');
-      setVales([]);
+      console.error('Error loading vale asociado:', error);
+      setValeAsociado(null);
     }
   };
 
   const handleAutorizar = async () => {
-    if (!valeSeleccionado) {
-      alert('Por favor seleccione un vale de combustible');
+    if (!valeAsociado) {
+      alert('No se encontró un vale de combustible asociado a esta hoja de salida');
       return;
     }
 
     setLoading(true);
     try {
       await axiosInstance.post('/api/hoja-es/autorizacion/autorizar', {
-        id_hoja: hoja.id_hoja,
-        id_vale: parseInt(valeSeleccionado)
+        id_hoja: hoja.id_hoja
       });
 
       alert('Hoja de salida autorizada exitosamente');
@@ -72,8 +51,32 @@ const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
     }
   };
 
+  const handleRechazar = async () => {
+    const confirmRechazar = window.confirm(
+      `¿Está seguro que desea rechazar la Hoja de Salida #${hoja.id_hoja}?\n\nEsta acción cancelará la hoja y no se podrá deshacer.`
+    );
+
+    if (!confirmRechazar) return;
+
+    setLoading(true);
+    try {
+      await axiosInstance.post('/api/hoja-es/autorizacion/rechazar', {
+        id_hoja: hoja.id_hoja,
+        observaciones: observaciones
+      });
+
+      alert('Hoja de salida rechazada exitosamente');
+      onSuccess();
+    } catch (error) {
+      console.error('Error rechazando hoja:', error);
+      alert('Error al rechazar la hoja de salida');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleClose = () => {
-    setValeSeleccionado('');
+    setValeAsociado(null);
     setObservaciones('');
     onClose();
   };
@@ -151,28 +154,32 @@ const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
               </div>
             </div>
 
-            {/* Número de Vale */}
+            {/* Vale de Combustible Asociado */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número de Vale <span className="text-red-500">*</span>
+                Vale de Combustible Asociado
               </label>
-              <select
-                value={valeSeleccionado}
-                onChange={(e) => setValeSeleccionado(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">Seleccione un vale de combustible</option>
-                {vales.map((vale) => (
-                  <option key={vale.vale_id} value={vale.vale_id}>
-                    {vale.display_text}
-                  </option>
-                ))}
-              </select>
-              {vales.length === 0 && (
-                <p className="text-sm text-red-600 mt-1">
-                  No hay vales de combustible disponibles
-                </p>
+              {valeAsociado ? (
+                <div className="px-3 py-2 bg-green-50 border border-green-300 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Fuel className="w-4 h-4 text-green-600" />
+                    <span className="text-green-800 font-medium">
+                      Q. {parseFloat(valeAsociado.valor_vale).toFixed(2)} - {valeAsociado.cupon}{valeAsociado.codigo}
+                    </span>
+                  </div>
+                  <div className="text-sm text-green-600 mt-1">
+                    {valeAsociado.proveedor} - {valeAsociado.tipo_combustible}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <span className="text-red-800">
+                      No se encontró un vale de combustible asociado
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -210,75 +217,53 @@ const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
             </div>
           )}
 
-          {/* Información del Vale Seleccionado */}
-          {valeSeleccionado && (
-            <div className="mb-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Fuel className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-900">Vale de Combustible Seleccionado:</span>
-                </div>
-                {(() => {
-                  const valeSeleccionadoData = vales.find(v => v.vale_id === parseInt(valeSeleccionado));
-                  return valeSeleccionadoData ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-blue-900">Proveedor:</span>
-                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.proveedor}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-900">Tipo:</span>
-                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.tipo_combustible}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-900">Valor:</span>
-                        <span className="text-blue-800 ml-2">Q. {parseFloat(valeSeleccionadoData.valor_vale).toFixed(2)}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-900">Cupón:</span>
-                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.cupon}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-900">Código:</span>
-                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.codigo}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-blue-900">Estado:</span>
-                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.estado}</span>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end space-x-4 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex justify-between p-6 border-t border-gray-200 bg-gray-50">
           <button
-            onClick={handleClose}
-            className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleAutorizar}
-            disabled={!valeSeleccionado || loading}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            onClick={handleRechazar}
+            disabled={loading}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Autorizando...</span>
+                <span>Procesando...</span>
               </>
             ) : (
               <>
-                <Check className="w-4 h-4" />
-                <span>Autorizar</span>
+                <XCircle className="w-4 h-4" />
+                <span>Rechazar</span>
               </>
             )}
           </button>
+          
+          <div className="flex space-x-4">
+            <button
+              onClick={handleClose}
+              className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleAutorizar}
+              disabled={!valeAsociado || loading}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Autorizando...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Autorizar</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

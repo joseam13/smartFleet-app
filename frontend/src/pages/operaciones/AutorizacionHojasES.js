@@ -156,15 +156,15 @@ const AutorizacionHojasES = () => {
             { label: 'Inicio', href: '/' },
             { label: 'Operaciones', href: '/operaciones' },
             { label: 'Salidas', href: '/operaciones/salidas' },
-            { label: 'Autorización de Hojas de Salida', href: '/operaciones/salidas/autorizacion-hojas' }
+            { label: 'Hojas de Salida', href: '/operaciones/salidas/autorizacion-hojas' }
           ]}
         />
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Autorización de Hojas de Salida</h1>
-            <p className="text-gray-600 mt-1">Gestionar autorización de hojas de salida pendientes</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Hojas de Salida</h1>
+            <p className="text-gray-600 mt-1">Gestionar autorización/cancelación de Hojas de Salida pendientes</p>
           </div>
 
           {/* Filtros y Búsqueda */}
@@ -279,7 +279,7 @@ const AutorizacionHojasES = () => {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-600">H</span>
+                              <span className="text-sm font-medium text-blue-600">{hoja.id_plataforma}</span>
                             </div>
                           </div>
                           <div className="ml-4">
@@ -337,7 +337,7 @@ const AutorizacionHojasES = () => {
                             <button
                               onClick={() => handleAutorizar(hoja)}
                               className="text-green-600 hover:text-green-900 p-1 rounded"
-                              title="Autorizar"
+                              title="Autorizar/Cancelar"
                             >
                               <Check className="w-5 h-5" />
                             </button>

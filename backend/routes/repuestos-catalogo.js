@@ -106,7 +106,7 @@ router.post('/', auth, [
     }
     return true;
   }),
-  body('referencia').optional().isLength({ max: 20 }).withMessage('La referencia no puede exceder 20 caracteres'),
+  body('cod_articulo').optional().isLength({ max: 30 }).withMessage('El código de artículo no puede exceder 30 caracteres'),
   body('cod_barras').optional().isLength({ max: 20 }).withMessage('El código de barras no puede exceder 20 caracteres'),
   body('descripcion').optional().isLength({ max: 50 }).withMessage('La descripción no puede exceder 50 caracteres'),
   body('unidad_medida').optional().trim().escape(),
@@ -142,7 +142,7 @@ router.post('/', auth, [
       id_empresa,
       id_sede,
       tipo_vehiculo,
-      referencia,
+      cod_articulo,
       cod_barras,
       descripcion,
       unidad_medida,
@@ -173,7 +173,7 @@ router.post('/', auth, [
       id_empresa: id_empresa || 1,
       id_sede: id_sede || 1,
       tipo_vehiculo,
-      referencia: referencia || null,
+      cod_articulo: cod_articulo || null,
       cod_barras: cod_barras || null,
       descripcion: descripcion || null,
       unidad_medida: unidad_medida || null,
@@ -183,14 +183,14 @@ router.post('/', auth, [
     });
     const [result] = await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_M008 (
-        id_empresa, id_sede, tipo_vehiculo, referencia, cod_barras, descripcion, 
+        id_empresa, id_sede, tipo_vehiculo, cod_articulo, cod_barras, descripcion, 
         unidad_medida, punto_reorden, anotaciones, estatus, fe_registro, fe_modificacion
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         id_empresa || 1,
         id_sede || 1,
         tipo_vehiculo,
-        referencia || null,
+        cod_articulo || null,
         cod_barras || null,
         descripcion || null,
         unidad_medida || null,
@@ -248,7 +248,7 @@ router.put('/:id', auth, [
     }
     return true;
   }),
-  body('referencia').optional().isLength({ max: 20 }).withMessage('La referencia no puede exceder 20 caracteres'),
+  body('cod_articulo').optional().isLength({ max: 20 }).withMessage('El código de artículo no puede exceder 20 caracteres'),
   body('cod_barras').optional().isLength({ max: 20 }).withMessage('El código de barras no puede exceder 20 caracteres'),
   body('descripcion').optional().isLength({ max: 50 }).withMessage('La descripción no puede exceder 50 caracteres'),
   body('unidad_medida').optional().trim().escape(),
@@ -286,7 +286,7 @@ router.put('/:id', auth, [
       id_empresa,
       id_sede,
       tipo_vehiculo,
-      referencia,
+      cod_articulo,
       cod_barras,
       descripcion,
       unidad_medida,
@@ -324,7 +324,7 @@ router.put('/:id', auth, [
     // Actualizar repuesto
     await pool.execute(
       `UPDATE FLVEHI.FLVEH_M008 SET 
-        id_empresa = ?, id_sede = ?, tipo_vehiculo = ?, referencia = ?, cod_barras = ?, 
+        id_empresa = ?, id_sede = ?, tipo_vehiculo = ?, cod_articulo = ?, cod_barras = ?, 
         descripcion = ?, unidad_medida = ?, punto_reorden = ?, anotaciones = ?, 
         estatus = ?, fe_modificacion = CURRENT_TIMESTAMP
       WHERE id_repuesto = ?`,
@@ -332,7 +332,7 @@ router.put('/:id', auth, [
         id_empresa || 1,
         id_sede || 1,
         tipo_vehiculo,
-        referencia || null,
+        cod_articulo || null,
         cod_barras || null,
         descripcion || null,
         unidad_medida || null,

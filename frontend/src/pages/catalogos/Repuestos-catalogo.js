@@ -43,7 +43,7 @@ const RepuestosCatalogo = () => {
     id_empresa: 1,
     id_sede: 1,
     tipo_vehiculo: '',
-    referencia: '',
+    cod_articulo: '',
     cod_barras: '',
     descripcion: '',
     unidad_medida: '',
@@ -139,7 +139,7 @@ const RepuestosCatalogo = () => {
   // Filtrar repuestos
   const filteredRepuestos = repuestos.filter(repuesto => {
     const matchesSearch = repuesto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         repuesto.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         repuesto.cod_articulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          repuesto.cod_barras?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || repuesto.estatus === filterStatus;
@@ -184,7 +184,7 @@ const RepuestosCatalogo = () => {
       id_empresa: 1,
       id_sede: 1,
       tipo_vehiculo: '',
-      referencia: '',
+      cod_articulo: '',
       cod_barras: '',
       descripcion: '',
       unidad_medida: '',
@@ -203,7 +203,7 @@ const RepuestosCatalogo = () => {
       id_empresa: repuesto.id_empresa || 1,
       id_sede: repuesto.id_sede || 1,
       tipo_vehiculo: repuesto.tipo_vehiculo || '',
-      referencia: repuesto.referencia || '',
+      cod_articulo: repuesto.cod_articulo || '',
       cod_barras: repuesto.cod_barras || '',
       descripcion: repuesto.descripcion || '',
       unidad_medida: repuesto.unidad_medida || '',
@@ -224,7 +224,7 @@ const RepuestosCatalogo = () => {
       id_empresa: 1,
       id_sede: 1,
       tipo_vehiculo: '',
-      referencia: '',
+      cod_articulo: '',
       cod_barras: '',
       descripcion: '',
       unidad_medida: '',
@@ -430,11 +430,11 @@ const RepuestosCatalogo = () => {
                 </label>
                 <input
                   type="text"
-                  name="referencia"
-                  value={formData.referencia}
+                  name="cod_articulo"
+                  value={formData.cod_articulo}
                   onChange={handleFormChange}
                   className="input"
-                  placeholder="REF001"
+                  placeholder="ART001"
                   maxLength={20}
                 />
               </div>
@@ -588,7 +588,7 @@ const RepuestosCatalogo = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por descripción, referencia, código de barras..."
+                placeholder="Buscar por descripción, código de artículo, código de barras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"
@@ -640,7 +640,7 @@ const RepuestosCatalogo = () => {
                     Tipo de Vehículo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Referencia / Código
+                    Código de Artículo / Código de Barras
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Existencia / Reorden
@@ -711,7 +711,7 @@ const RepuestosCatalogo = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          {repuesto.referencia && <div>Ref: {repuesto.referencia}</div>}
+                          {repuesto.cod_articulo && <div>Código: {repuesto.cod_articulo}</div>}
                           {repuesto.cod_barras && <div>Código: {repuesto.cod_barras}</div>}
                         </div>
                       </td>

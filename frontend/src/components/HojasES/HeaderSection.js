@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, User, Truck, Gauge, FileText, Fuel } from 'lucide-react';
 import FuelGauge from './FuelGauge';
 import MotorcycleViews from './MotorcycleViews';
+import ValesCombustibleList from './ValesCombustibleList';
 import axiosInstance from '../../utils/axiosConfig';
 
 
@@ -29,7 +30,10 @@ const HeaderSection = ({
   // Props para fotos
   fotosCargadas,
   fotosFaltantes,
-  onOpenFotosModal
+  onOpenFotosModal,
+  // Props para vales de combustible
+  valeSeleccionado,
+  setValeSeleccionado
 }) => {
   // Debug: Verificar props recibidos
   console.log('HeaderSection props:', {
@@ -43,7 +47,7 @@ const HeaderSection = ({
       <div className="flex items-center justify-between mb-6">
       
         
-        {/* Campo Hoja No. */}
+        {/* Campo Hoja No. 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span className="text-6x1 font-medium">Hoja No.</span>
@@ -52,6 +56,7 @@ const HeaderSection = ({
             </div>
           </div>
         </div>
+        */}
         
         {/* Botones de Cliente */}
         <div className="flex space-x-2">
@@ -209,6 +214,15 @@ const HeaderSection = ({
             <p className="text-red-400 text-xs">{errors.fotos}</p>
           )}
         </div>
+      </div>
+
+      {/* Tercera fila - Vales de Combustible */}
+      <div className="mt-6">
+        <ValesCombustibleList
+          valeSeleccionado={valeSeleccionado}
+          setValeSeleccionado={setValeSeleccionado}
+          errors={errors}
+        />
       </div>
     </div>
   );
