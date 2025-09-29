@@ -35,7 +35,7 @@ import axiosInstance from '../../utils/axiosConfig';
 import API_CONFIG from '../../config/api';
 import { getEnvConfig } from '../../config/environment';
 
-
+ 
 const IngresoRepuestos = () => {
   const { user } = useAuth();
   const [sedes, setSedes] = useState([]);
