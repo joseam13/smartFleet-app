@@ -2,7 +2,7 @@ name: Build and Deploy Frontend to Droplet
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - '**/*.js'
       - '**/*.jsx'
