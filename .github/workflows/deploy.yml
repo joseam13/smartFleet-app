@@ -1,0 +1,73 @@
+name: Build and Deploy Frontend to Droplet
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.css'
+      - '**/*.scss'
+      - '**/*.json'
+      - '!**/node_modules/**'
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add droplet to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$DO_HOST" >> ~/.ssh/known_hosts
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+
+      - name: Create remote directory (if missing)
+        run: |
+          ssh -o StrictHostKeyChecking=yes "$DO_USER@$DO_HOST" "mkdir -p '$DO_PATH'"
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_PATH: ${{ secrets.DO_PATH }}
+
+      - name: Rsync build to droplet
+        run: |
+          rsync -az --delete \
+            ./build/ \
+            "$DO_USER@$DO_HOST:$DO_PATH/"
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_PATH: ${{ secrets.DO_PATH }}
