@@ -159,6 +159,12 @@ const MainNavigation = () => {
           label: 'Autorizar/Cancelar Hoja de Salida',
           icon: <Check className="h-4 w-4" />,
           path: '/operaciones/salidas/autorizacion-hojas'
+        },
+        {
+          id: 'hoja-entrada',
+          label: 'Hoja de Entrada',
+          icon: <FileText className="h-4 w-4" />,
+          path: '/operaciones/hoja-en'
         },        
         {
           id: 'servicios',

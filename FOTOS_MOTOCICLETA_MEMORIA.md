@@ -180,3 +180,5 @@ setFotosItemsPendientes([]); // Limpiar fotos de items
 **Estado**: ✅ **COMPLETADO** - Sistema de fotos de motocicleta en memoria implementado exitosamente.
 
 
+
+

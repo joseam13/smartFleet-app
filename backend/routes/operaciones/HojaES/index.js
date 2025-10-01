@@ -212,11 +212,11 @@ router.post('/item-revisado', auth, [
     await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_T002 (
         id_hoja, id_empresa, id_check, anotacion, id_usuario, 
-        tiempo_inicio, tiempo_final, fe_registro, fe_modificacion, estado
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)`,
+        tiempo_inicio, tiempo_final, tipo_hoja, fe_registro, fe_modificacion, estado
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)`,
       [
         id_hoja, 1, id_check, anotacion || '', req.user.id_usuario,
-        '', '', 'ING'
+        '', '', 'S', 'ING'
       ]
     );
 

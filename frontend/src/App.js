@@ -17,6 +17,7 @@ import TiposVehiculos from './pages/catalogos/Tipos-vehiculos';
 import RepuestosCatalogo from './pages/catalogos/Repuestos-catalogo';
 import ValesCombustible from './pages/catalogos/Vales-combustible';
 // Operaciones
+import HojaEN from './pages/operaciones/HojaEN';
 import Salidas from './pages/operaciones/Salidas';
 import HojaES from './pages/operaciones/HojaES';
 import AutorizacionHojasES from './pages/operaciones/AutorizacionHojasES';
@@ -115,6 +116,10 @@ function App() {
         <Route 
           path="/operaciones/salidas/hoja-es" 
           element={isAuthenticated ? <HojaES /> : <Navigate to="/login" />} 
+        />
+        <Route
+          path="/operaciones/hoja-en"
+          element={isAuthenticated ? <HojaEN /> : <Navigate to="/login" />}
         />
         <Route 
           path="/operaciones/salidas/autorizacion-hojas" 

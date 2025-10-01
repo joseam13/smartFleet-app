@@ -14,6 +14,7 @@ const checkMasterRoutes = require('./routes/check-master');
 const tiposVehiculosRoutes = require('./routes/tipos-vehiculos');
 const repuestosCatalogoRoutes = require('./routes/repuestos-catalogo');
 const valesCombustibleRoutes = require('./routes/vales-combustible');
+const hojaENRoutes = require('./routes/operaciones/HojaEN');
 // Rutas de Operaciones
 const salidasRoutes = require('./routes/operaciones/salidas');
 const serviciosRoutes = require('./routes/operaciones/servicios');
@@ -74,6 +75,7 @@ app.use('/api/tipos-vehiculos', tiposVehiculosRoutes);
 app.use('/api/repuestos-catalogo', repuestosCatalogoRoutes);
 app.use('/api/vales-combustible', valesCombustibleRoutes);
 // Rutas de Operaciones
+app.use('/api/hoja-en', hojaENRoutes);
 app.use('/api/salidas', salidasRoutes);
 app.use('/api/servicios', serviciosRoutes);
 app.use('/api/repuestos', repuestosRoutes);

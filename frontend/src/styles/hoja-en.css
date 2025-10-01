@@ -1,0 +1,304 @@
+/* Paleta de colores para Hoja de Entrada */
+:root {
+  --hoja-en-primary: #19183B;      /* Azul marino oscuro */
+  --hoja-en-secondary: #708993;    /* Azul gris medio */
+  --hoja-en-accent: #A1C2BD;       /* Verde azulado claro */
+  --hoja-en-light: #E7F2EF;        /* Verde muy claro */
+}
+
+/* Estilos para la sección de encabezado */
+.hoja-en-header {
+  background: linear-gradient(135deg, var(--hoja-en-primary) 0%, var(--hoja-en-secondary) 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.hoja-en-header h2 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Estilos para los campos del formulario */
+.hoja-en-field {
+  background: var(--hoja-en-light);
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.hoja-en-field:hover {
+  border-color: var(--hoja-en-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hoja-en-field label {
+  color: var(--hoja-en-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.hoja-en-field input,
+.hoja-en-field select,
+.hoja-en-field textarea {
+  background: white;
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.hoja-en-field input:focus,
+.hoja-en-field select:focus,
+.hoja-en-field textarea:focus {
+  outline: none;
+  border-color: var(--hoja-en-primary);
+  box-shadow: 0 0 0 3px rgba(25, 24, 59, 0.1);
+}
+
+/* Estilos para la sección de checklist */
+.hoja-en-checklist {
+  background: var(--hoja-en-light);
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.hoja-en-checklist h2 {
+  color: var(--hoja-en-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.hoja-en-checklist-item {
+  background: white;
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.hoja-en-checklist-item:hover {
+  border-color: var(--hoja-en-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hoja-en-checklist-item.checked {
+  background: var(--hoja-en-light);
+  border-color: var(--hoja-en-primary);
+}
+
+/* Estilos para la sección de items revisados */
+.hoja-en-items {
+  background: var(--hoja-en-light);
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.hoja-en-items h2 {
+  color: var(--hoja-en-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.hoja-en-item {
+  background: white;
+  border: 2px solid var(--hoja-en-accent);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.hoja-en-item:hover {
+  border-color: var(--hoja-en-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hoja-en-item.salida {
+  background: #f0f9ff;
+  border-color: #0ea5e9;
+}
+
+.hoja-en-item.entrada {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+/* Estilos para los botones */
+.hoja-en-button {
+  background: var(--hoja-en-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hoja-en-button:hover {
+  background: var(--hoja-en-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hoja-en-button.secondary {
+  background: var(--hoja-en-accent);
+  color: var(--hoja-en-primary);
+}
+
+.hoja-en-button.secondary:hover {
+  background: var(--hoja-en-secondary);
+  color: white;
+}
+
+.hoja-en-button.danger {
+  background: #dc2626;
+  color: white;
+}
+
+.hoja-en-button.danger:hover {
+  background: #b91c1c;
+}
+
+/* Estilos para el modal de confirmación */
+.hoja-en-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.hoja-en-modal h3 {
+  color: var(--hoja-en-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.hoja-en-modal .numero-hoja {
+  color: var(--hoja-en-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 16px 0;
+}
+
+/* Estilos para la carga de fotos */
+.hoja-en-photo-upload {
+  background: var(--hoja-en-light);
+  border: 3px dashed var(--hoja-en-accent);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hoja-en-photo-upload:hover {
+  border-color: var(--hoja-en-secondary);
+  background: white;
+}
+
+.hoja-en-photo-upload.has-photos {
+  border-color: var(--hoja-en-primary);
+  background: var(--hoja-en-light);
+}
+
+/* Estilos para mensajes de error */
+.hoja-en-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hoja-en-error::before {
+  content: "⚠";
+  font-size: 0.75rem;
+}
+
+/* Estilos para mensajes de éxito */
+.hoja-en-success {
+  color: #059669;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hoja-en-success::before {
+  content: "✓";
+  font-size: 0.75rem;
+}
+
+/* Estilos para el indicador de carga */
+.hoja-en-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--hoja-en-primary);
+}
+
+.hoja-en-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--hoja-en-accent);
+  border-top: 3px solid var(--hoja-en-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hoja-en-header {
+    padding: 16px;
+  }
+  
+  .hoja-en-field {
+    padding: 12px;
+  }
+  
+  .hoja-en-checklist,
+  .hoja-en-items {
+    padding: 16px;
+  }
+  
+  .hoja-en-modal {
+    padding: 24px;
+    margin: 16px;
+  }
+}
+
+
